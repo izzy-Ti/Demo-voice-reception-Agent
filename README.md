@@ -1,26 +1,28 @@
-# 🛎️ Grand Azure Hotel — Virtual Voice Receptionist Agent
+# 🛎️ Grand Azure Hotel — AI Voice Receptionist Agent
 
-A lightweight, production-ready virtual voice receptionist for hotels powered by **Gemini** and **FastAPI**, with a built-in dummy hotel management system and Web Speech voice interface.
+A lightweight virtual hotel voice receptionist agent powered by **Google Gemini API** (`gemini-2.5-flash`) and **FastAPI**, with browser-native Web Speech recognition and voice synthesis.
 
 ---
 
 ## ✨ Features
 
+- **🧠 Real AI via Gemini API**:
+  - Sends user voice and text queries directly to Google Gemini (`gemini-2.5-flash`).
+  - System prompt equips Gemini with full dummy hotel knowledge: room inventory, pricing, existing bookings, amenities, policies, and reception procedures.
+  - Multi-turn conversational memory per session.
 - **🎙️ Real-time Voice Interaction**:
-  - Voice-to-Text via browser Web Speech Recognition (`webkitSpeechRecognition`).
-  - Text-to-Speech response spoken aloud via browser Speech Synthesis with audio waveform visualizers.
-  - Text chat fallback & quick suggestion prompt chips.
-- **🏨 Realistic Hotel Front-Desk Operations**:
-  - **Room Availability & Rates**: Inquire about Standard King ($140/nt), Deluxe Queen ($190/nt), Ocean View Suite ($290/nt), and Presidential Penthouse ($590/nt).
-  - **Instant Booking**: Books rooms, decrements live inventory, assigns room numbers, and issues confirmation codes (`HTL-XXXX`).
-  - **Reservation Lookup**: Look up bookings by confirmation code (`HTL-1024`, `HTL-2048`, `HTL-3072`) or guest name.
-  - **Hotel Amenities & Policies**: Instant answers on Wi-Fi password (`GrandAzure_Guest` / `AzureStay2026`), complimentary breakfast hours (6:30 AM – 10:30 AM), 4th-floor infinity pool & spa, 24/7 fitness center, valet parking, and check-in/out policies.
-  - **Guest Services & Housekeeping**: Request extra towels, bathrobes, wake-up calls, bell desk luggage assistance, or room service.
-- **⚡ Ultra-Lightweight Stack**:
-  - Powered by FastAPI, Uvicorn, and Google's official `google-genai` SDK.
-  - Dual-mode architecture: Uses **Gemini** (`gemini-2.5-flash`) with function calling when `GEMINI_API_KEY` is present, and gracefully switches to a smart built-in rule-based receptionist dummy engine when running offline.
-- **📊 Live Hotel Monitor Dashboard**:
-  - Collapsible drawer showing live room inventory, active guest reservations, and dispatched service requests in real time.
+  - Speech-to-Text using browser Web Speech Recognition (`webkitSpeechRecognition`).
+  - Text-to-Speech audio response using browser Speech Synthesis.
+  - Animated soundwave visualizers and status indicators.
+  - Mute/unmute voice toggle and text input fallback.
+- **🏨 Realistic Hotel Front-Desk Duties**:
+  - **Room Availability & Rates**: Standard King ($140/nt), Deluxe Queen ($190/nt), Ocean View Suite ($290/nt), Presidential Penthouse ($590/nt).
+  - **Booking**: Reserves rooms and generates confirmation codes (`HTL-XXXX`).
+  - **Reservation Lookup**: Looks up bookings (e.g., John Doe `HTL-1024`, Sarah Connor `HTL-2048`, Michael Scott `HTL-3072`).
+  - **Hotel Amenities & Policies**: Answers Wi-Fi credentials (`GrandAzure_Guest` / `AzureStay2026`), complimentary breakfast hours (6:30 AM – 10:30 AM), 4th-floor infinity pool, 24/7 fitness center, valet parking, and check-in (3 PM) / check-out (11 AM) times.
+  - **Guest Services & Housekeeping**: Logs requests for extra towels, pillows, room cleaning, wake-up calls, or room service with reference IDs (`REQ-XXX`).
+- **⚡ Super Lightweight Framework**:
+  - Single FastAPI service with zero heavy binary dependencies.
 
 ---
 
@@ -28,15 +30,14 @@ A lightweight, production-ready virtual voice receptionist for hotels powered by
 
 ```
 Demo-voice-reception-Agent/
-├── main.py               # FastAPI entry point & API endpoints
-├── agent.py              # Receptionist Agent (Gemini + Tools + Fallback)
-├── hotel_data.py         # Dummy hotel database & operations
+├── main.py               # Lightweight FastAPI app & chat endpoints
+├── agent.py              # Gemini Agent with hotel system prompt
 ├── static/
 │   ├── index.html        # Voice receptionist web interface
-│   ├── style.css         # Luxury hotel theme styling & audio animations
-│   └── app.js            # Web Speech STT/TTS & real-time dashboard
+│   ├── style.css         # Luxury hotel UI styling & audio visualizer
+│   └── app.js            # Speech recognition & text-to-speech engine
 ├── tests/
-│   └── test_agent.py     # Comprehensive test suite (19 tests)
+│   └── test_agent.py     # Automated test suite
 ├── .env.example          # Environment variables template
 ├── requirements.txt      # Python dependencies
 └── pytest.ini            # Pytest configuration
@@ -44,31 +45,25 @@ Demo-voice-reception-Agent/
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Getting Started
 
-### 1. Clone the repository & enter directory
-```bash
-git clone https://github.com/izzy-Ti/Demo-voice-reception-Agent.git
-cd Demo-voice-reception-Agent
-```
-
-### 2. Install dependencies
+### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. (Optional) Set your Gemini API Key
-Create a `.env` file from the example:
+### 2. Configure your Gemini API Key
+Create a `.env` file by copying the template:
 ```bash
 cp .env.example .env
 ```
-Add your key inside `.env`:
+Open `.env` and add your Google Gemini API key:
 ```ini
-GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=AIzaSy...your_gemini_api_key...
 ```
-> **Note**: Even without an API key, the agent runs in full dummy receptionist mode with all hotel capabilities enabled!
+*(Get a free key from [Google AI Studio](https://aistudio.google.com/app/apikey))*
 
-### 4. Run the Application
+### 3. Run the application
 ```bash
 python main.py
 ```
@@ -82,24 +77,23 @@ Open your browser and navigate to:
 
 ---
 
-## 🗣️ Example Voice Prompts to Try
+## 🗣️ Voice Prompts to Try
 
-| Category | Example Voice Prompt |
+| Topic | Example Question |
 | :--- | :--- |
-| **Room Availability** | *"Do you have any rooms available tonight?"* |
+| **Room Rates** | *"Do you have any rooms available tonight? What are the prices?"* |
 | **Wi-Fi Details** | *"What is the Wi-Fi network and password?"* |
-| **Breakfast Info** | *"What time is breakfast and where is it served?"* |
-| **Booking Lookup** | *"Look up the reservation for John Doe"* |
+| **Breakfast** | *"What time is breakfast served and where is it located?"* |
+| **Lookup Booking** | *"Can you look up the reservation for John Doe?"* |
 | **Guest Services** | *"Can you please send extra towels to room 402?"* |
-| **Room Booking** | *"Please book a Deluxe Queen Suite for 2 nights for Alex Smith"* |
-| **Amenities** | *"What are the pool and gym hours?"* |
-| **Check-out Policy** | *"What time is check-out tomorrow?"* |
+| **Book a Room** | *"I'd like to book a Deluxe Queen Suite for 2 nights for Alex Smith"* |
+| **Check-out Time** | *"What time is check-out tomorrow?"* |
+| **Amenities** | *"Where is the pool and what time does it close?"* |
 
 ---
 
 ## 🧪 Running Tests
 
-To run the unit and integration test suite:
 ```bash
 python -m pytest
 ```
