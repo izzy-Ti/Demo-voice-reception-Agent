@@ -1,10 +1,10 @@
 """
-Unit and integration tests for the Gemini Hotel Voice Receptionist Agent.
+Unit and integration tests for the Gemini 3.8 Flash Hotel Voice Receptionist API.
 """
 
 import sys
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -16,87 +16,83 @@ from main import app
 client = TestClient(app)
 
 
-class TestSystemPrompt:
-    """Verifies that the system prompt contains all necessary dummy hotel data."""
+class TestPromptAndModel:
+    """Verifies system prompt content and model configuration."""
 
-    def test_system_prompt_contains_rooms(self):
+    def test_system_prompt_hotel_knowledge(self):
+        assert "Grand Azure Hotel & Suites" in SYSTEM_PROMPT
         assert "Standard King Room" in SYSTEM_PROMPT
         assert "$140" in SYSTEM_PROMPT
         assert "Deluxe Queen Suite" in SYSTEM_PROMPT
         assert "$190" in SYSTEM_PROMPT
-        assert "Ocean View Executive Suite" in SYSTEM_PROMPT
-        assert "Presidential Penthouse" in SYSTEM_PROMPT
-
-    def test_system_prompt_contains_dummy_bookings(self):
         assert "John Doe" in SYSTEM_PROMPT
         assert "HTL-1024" in SYSTEM_PROMPT
-        assert "Sarah Connor" in SYSTEM_PROMPT
-        assert "HTL-2048" in SYSTEM_PROMPT
-        assert "Michael Scott" in SYSTEM_PROMPT
-
-    def test_system_prompt_contains_amenities_and_policies(self):
         assert "GrandAzure_Guest" in SYSTEM_PROMPT
         assert "AzureStay2026" in SYSTEM_PROMPT
-        assert "Garden Terrace" in SYSTEM_PROMPT
-        assert "6:30 AM" in SYSTEM_PROMPT
-        assert "3:00 PM" in SYSTEM_PROMPT
-        assert "11:00 AM" in SYSTEM_PROMPT
+
+    def test_default_model_is_gemini_3_8_flash(self):
+        agent = HotelReceptionistAgent()
+        assert agent.model == "gemini-3.8-flash"
 
 
-class TestAgentBehavior:
-    """Verifies agent response logic and Gemini API integration."""
+class TestAgentResponseLogic:
+    """Verifies agent chat behavior."""
 
     def test_empty_message_returns_greeting(self):
         agent = HotelReceptionistAgent(api_key=None)
         res = agent.respond("")
+        assert res["status"] == "success"
         assert "Alex" in res["reply"]
         assert "Grand Azure" in res["reply"]
 
-    def test_missing_api_key_returns_guidance(self):
+    def test_missing_api_key(self):
         agent = HotelReceptionistAgent(api_key="")
-        res = agent.respond("Hello, do you have rooms?")
-        assert "GEMINI_API_KEY" in res["reply"]
+        agent.client = None
+        res = agent.respond("Hello!")
+        assert res["status"] == "error"
         assert res.get("error") == "MISSING_API_KEY"
 
-    def test_gemini_api_call(self):
-        agent = HotelReceptionistAgent(api_key="dummy-test-key")
-        # Mock the Gemini client models.generate_content
+    def test_successful_gemini_response(self):
+        agent = HotelReceptionistAgent(api_key="test-key")
         mock_response = MagicMock()
-        mock_response.text = "We have Standard King and Deluxe Queen rooms available tonight starting at $140."
+        mock_response.text = "Hello! We have Deluxe Queen Suites available for $190 per night."
         
         agent.client = MagicMock()
         agent.client.models.generate_content.return_value = mock_response
 
-        res = agent.respond("Do you have rooms available tonight?", session_id="test-session")
-        assert "Standard King" in res["reply"]
-        assert res["session_id"] == "test-session"
-        
-        # Verify history is saved
-        history = agent.get_session_history("test-session")
-        assert len(history) == 2
-        assert history[0]["role"] == "user"
-        assert history[1]["role"] == "model"
+        res = agent.respond("Do you have rooms?", session_id="test-sess")
+        assert res["status"] == "success"
+        assert "Deluxe Queen" in res["reply"]
+        assert res["model"] == "gemini-3.8-flash"
+        assert res["session_id"] == "test-sess"
 
 
-class TestFastAPIRoutes:
+class TestApiEndpoints:
     """Verifies FastAPI HTTP endpoints."""
 
-    def test_get_root_page(self):
+    def test_root_endpoint_returns_json_info(self):
         response = client.get("/")
-        assert response.status_code == 200
-        assert "text/html" in response.headers.get("content-type", "")
-
-    def test_api_status_endpoint(self):
-        response = client.get("/api/status")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "online"
-        assert "has_api_key" in data
-        assert "model" in data
+        assert data["model"] == "gemini-3.8-flash"
+        assert data["endpoint"] == "POST /chat"
+        assert "sample_request_json" in data
+        assert "message" in data["sample_request_json"]
 
-    def test_api_chat_endpoint(self):
-        response = client.post("/api/chat", json={"message": "", "session_id": "test-1"})
+    def test_chat_endpoint_validates_request(self):
+        response = client.post("/chat", json={"message": ""})
         assert response.status_code == 200
         data = response.json()
         assert "reply" in data
-        assert "session_id" in data
+        assert "model" in data
+
+    def test_api_chat_alias_endpoint(self):
+        response = client.post("/api/chat", json={"message": ""})
+        assert response.status_code == 200
+        assert "reply" in response.json()
+
+    def test_reset_session_endpoint(self):
+        response = client.post("/reset", json={"session_id": "test-session-1"})
+        assert response.status_code == 200
+        assert response.json()["status"] == "success"

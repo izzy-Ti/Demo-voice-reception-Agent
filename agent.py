@@ -1,9 +1,10 @@
 """
-Hotel Voice Receptionist Agent powered directly by Google Gemini API.
-Uses a detailed system prompt containing dummy hotel data, policies, and receptionist duties.
+Hotel Receptionist Agent powered by Gemini 3.8 Flash.
+Directly queries the Gemini API with a system prompt containing dummy hotel data.
 """
 
 import os
+import time
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 from google import genai
@@ -16,8 +17,8 @@ You are Alex, the friendly, polished virtual voice receptionist for Grand Azure 
 
 Your Personality & Voice Style:
 - Warm, polite, helpful, and hospitable.
-- Speak in natural, conversational sentences suitable for Text-to-Speech playback.
-- Keep your answers concise and easy to listen to. Do NOT use markdown tables, excessive bullet points, or unpronounceable formatting.
+- Speak in natural, conversational sentences suitable for a hotel receptionist.
+- Keep your answers concise, clear, and professional. Avoid markdown tables or overly long bullet points.
 
 Hotel Dummy Knowledge & Data:
 1. Room Types & Rates:
@@ -32,8 +33,8 @@ Hotel Dummy Knowledge & Data:
    - Guest: Michael Scott | Confirmation Code: HTL-3072 | Room: 305 (Standard King) | Check-in: 2 days ago | Check-out: Today | Status: Checked-In
 
 3. Hotel Amenities & Policies:
-   - Wi-Fi: Complimentary throughout the property. Network: 'GrandAzure_Guest', Password: 'AzureStay2026'.
-   - Breakfast: Complimentary gourmet buffet daily from 6:30 AM to 10:30 AM at the Garden Terrace on Level 1.
+   - Wi-Fi: Complimentary throughout property. Network: 'GrandAzure_Guest', Password: 'AzureStay2026'.
+   - Breakfast: Complimentary buffet daily 6:30 AM to 10:30 AM at Garden Terrace on Level 1.
    - Pool & Spa: Heated infinity pool on 4th floor, open daily 7:00 AM to 10:00 PM. Full-service spa open 9:00 AM to 8:00 PM.
    - Fitness Center: Level 3, accessible 24/7 with room keycard.
    - Dining: 'Azure Bistro' (12:00 PM – 11:00 PM) and 'Skyline Rooftop Lounge' (5:00 PM – 1:00 AM). 24/7 in-room dining available.
@@ -49,20 +50,20 @@ Hotel Dummy Knowledge & Data:
 
 
 class HotelReceptionistAgent:
-    """Sends requests directly to the Gemini API with the hotel receptionist system prompt."""
+    """Manages chat requests with Gemini 3.8 Flash."""
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY", "").strip()
-        self.model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+        self.api_key = api_key if api_key is not None else os.getenv("GEMINI_API_KEY", "").strip()
+        self.model = model or os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
         self.sessions: Dict[str, List[Dict[str, str]]] = {}
         self.client: Optional[genai.Client] = None
         self._init_client()
 
     def _init_client(self):
-        """Initializes the Google GenAI client if an API key is present."""
+        """Initializes Google GenAI client if not already configured."""
         if self.client is not None:
             return
-        key = self.api_key or os.getenv("GEMINI_API_KEY", "").strip()
+        key = self.api_key.strip() if self.api_key is not None else os.getenv("GEMINI_API_KEY", "").strip()
         if key and key != "your_gemini_api_key_here":
             self.client = genai.Client(api_key=key)
         else:
@@ -79,29 +80,31 @@ class HotelReceptionistAgent:
 
     def respond(self, message: str, session_id: str = "default") -> Dict[str, Any]:
         """
-        Sends the user message to the Gemini API configured with the hotel system prompt.
+        Sends the message directly to Gemini 3.8 Flash with the receptionist system prompt.
         """
         message_text = (message or "").strip()
         if not message_text:
             return {
                 "reply": "Hello and welcome to Grand Azure Hotel & Suites! My name is Alex, your virtual front desk receptionist. How may I assist you today?",
                 "session_id": session_id,
+                "model": self.model,
+                "status": "success",
             }
 
-        # Ensure client is ready
         self._init_client()
         if not self.client:
             return {
-                "reply": "Welcome to Grand Azure Hotel! To enable AI responses, please set your GEMINI_API_KEY inside the .env file. (See .env.example for guidance).",
+                "reply": "Please set your GEMINI_API_KEY in the .env file. (See .env.example for details).",
                 "session_id": session_id,
+                "model": self.model,
+                "status": "error",
                 "error": "MISSING_API_KEY",
             }
 
         history = self.get_session_history(session_id)
 
-        # Build contents from conversation history
         contents: List[types.Content] = []
-        for turn in history[-8:]:  # Keep recent context
+        for turn in history[-8:]:
             contents.append(
                 types.Content(
                     role=turn["role"],
@@ -109,7 +112,6 @@ class HotelReceptionistAgent:
                 )
             )
 
-        # Add the current user query
         contents.append(
             types.Content(
                 role="user",
@@ -117,35 +119,48 @@ class HotelReceptionistAgent:
             )
         )
 
-        try:
-            config = types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                temperature=0.7,
-            )
+        config = types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            temperature=0.7,
+        )
 
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=contents,
-                config=config,
-            )
+        # Execute call with retry for transient high-demand (503) errors
+        last_exception = None
+        for attempt in range(2):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=config,
+                )
 
-            reply_text = (response.text or "").strip()
+                reply_text = (response.text or "").strip()
 
-            # Record in conversation history
-            history.append({"role": "user", "content": message_text})
-            history.append({"role": "model", "content": reply_text})
+                # Save turn to history
+                history.append({"role": "user", "content": message_text})
+                history.append({"role": "model", "content": reply_text})
 
-            return {
-                "reply": reply_text,
-                "session_id": session_id,
-                "model": self.model,
-            }
-        except Exception as e:
-            return {
-                "reply": f"I apologize, but I encountered an error communicating with Gemini: {str(e)}",
-                "session_id": session_id,
-                "error": str(e),
-            }
+                return {
+                    "reply": reply_text,
+                    "session_id": session_id,
+                    "model": self.model,
+                    "status": "success",
+                }
+            except Exception as e:
+                last_exception = e
+                # If temporary high demand, wait briefly and retry once
+                if "503" in str(e) or "UNAVAILABLE" in str(e):
+                    time.sleep(2)
+                    continue
+                break
+
+        return {
+            "reply": f"Gemini API error: {str(last_exception)}",
+            "session_id": session_id,
+            "model": self.model,
+            "status": "error",
+            "error": str(last_exception),
+        }
 
 
 # Global agent instance
