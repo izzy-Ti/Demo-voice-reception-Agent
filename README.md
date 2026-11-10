@@ -1,102 +1,86 @@
-# 🛎️ Grand Azure Hotel — AI Voice Receptionist API
+# 🛎️ Demo Hotel Voice Receptionist Agent
 
-A lightweight Hotel Voice Receptionist API powered directly by **Google Gemini 3.8 Flash** (`gemini-3.8-flash`) and **FastAPI**.
+A simple demo test agent for a hotel voice receptionist powered by **Google Gemini** (`gemini-3.8-flash`) and **FastAPI**.
+
+The agent acts as **Alex**, a virtual front desk receptionist for the fictional *Grand Azure Hotel & Suites*, answering inquiries about room availability, reservations, dummy bookings, amenities (Wi-Fi, breakfast, pool), and housekeeping requests.
 
 ---
 
-## ⚡ Quickstart
+## 🚀 Setup & Run
 
 ### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment (`.env`)
+### 2. Configure environment (`.env`)
 Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Ensure your Gemini API key and model are set inside `.env`:
+
+Add your Gemini API key inside `.env`:
 ```ini
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-3.8-flash
 PORT=8000
 ```
 
-### 3. Run the API Server
+### 3. Start the server
 ```bash
 python main.py
 ```
-*(Runs on **http://localhost:8000**)*
+*(Server runs on `http://localhost:8000`)*
 
 ---
 
-## 📡 API Testing & JSON Request
+## 📡 How to Test the API
 
-### Endpoint: `POST /chat` (or `POST /api/chat`)
+Send a `POST` request to `http://localhost:8000/chat`:
 
-#### Request Headers:
-`Content-Type: application/json`
-
-#### Request JSON Payload:
+### Request JSON:
 ```json
 {
-  "message": "Do you have any rooms available tonight? What are the rates?",
-  "session_id": "my-session-1"
+  "message": "Do you have any rooms available tonight? What are the prices?",
+  "session_id": "demo-1"
 }
 ```
 
-#### Successful Response JSON:
+### Response JSON:
 ```json
 {
-  "reply": "Welcome to Grand Azure Hotel & Suites! Yes, we have rooms available tonight. Our Standard King is $140 per night, the Deluxe Queen Suite is $190, our Ocean View Suite is $290, and the Presidential Penthouse is $590. Would you like me to book one for you?",
-  "session_id": "my-session-1",
+  "reply": "Welcome to Grand Azure Hotel & Suites! Yes, we have Standard King Rooms for $140/night, Deluxe Queen Suites for $190/night, Ocean View Suites for $290/night, and our Presidential Penthouse for $590/night. How may I assist you with a reservation?",
+  "session_id": "demo-1",
   "model": "gemini-3.8-flash",
   "status": "success"
 }
 ```
 
----
-
-## 💻 Sample Test Commands
-
-### Using cURL:
+### Quick cURL Test:
 ```bash
 curl -X POST "http://localhost:8000/chat" \
      -H "Content-Type: application/json" \
-     -d '{"message": "What is the Wi-Fi network and password?"}'
+     -d '{"message": "What is the Wi-Fi password?"}'
 ```
 
-### Using PowerShell:
+### Quick PowerShell Test:
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/chat" -Method Post -ContentType "application/json" -Body '{"message":"Can you look up the reservation for John Doe?"}'
-```
-
-### Checking API Status:
-Open your browser or run:
-```bash
-curl http://localhost:8000/
+Invoke-RestMethod -Uri "http://localhost:8000/chat" -Method Post -ContentType "application/json" -Body '{"message":"What time is breakfast served?"}'
 ```
 
 ---
 
-## 🏨 Hotel Reception Capabilities & Prompts
-
-| Topic | Sample Request JSON `message` |
-| :--- | :--- |
-| **Room Rates** | `"Do you have any rooms available tonight? What are the prices?"` |
-| **Wi-Fi Details** | `"What is the Wi-Fi network and password?"` |
-| **Breakfast Hours** | `"What time is breakfast served and where is it located?"` |
-| **Reservation Lookup** | `"Can you look up the reservation for John Doe?"` |
-| **Housekeeping** | `"Can you please send extra towels to room 402?"` |
-| **Room Booking** | `"Please book a Deluxe Queen Suite for 2 nights for Alex Smith"` |
-| **Check-out Time** | `"What time is check-out tomorrow?"` |
-| **Amenities** | `"Where is the pool and gym located?"` |
+## 🏨 Example Questions to Ask
+- *"Do you have any rooms available tonight?"*
+- *"What is the Wi-Fi network and password?"*
+- *"Can you look up the reservation for John Doe?"*
+- *"Can you please send extra towels to room 402?"*
+- *"What time is check-in and check-out?"*
+- *"Please book a Deluxe Queen Suite for 2 nights for Alex Smith"*
 
 ---
 
-## 🧪 Running Automated Tests
-
+## 🧪 Tests
 ```bash
 python -m pytest
 ```
@@ -104,4 +88,4 @@ python -m pytest
 ---
 
 ## 📄 License
-MIT License
+MIT
