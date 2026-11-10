@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Azure Hotel — Voice Receptionist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="hotel-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-crest">✦</span>
+        <div class="brand-text">
+          <span class="hotel-title">GRAND AZURE</span>
+          <span class="hotel-subtitle">HOTEL & SUITES • PALM BAY</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="toggle-dashboard-btn" class="pill-btn secondary-btn" title="View hotel dummy bookings and rooms">
+          <span class="btn-icon">📋</span> Hotel System Monitor
+        </button>
+        <button id="toggle-voice-btn" class="pill-btn icon-only" title="Toggle Voice Audio Output">
+          <span id="voice-icon">🔊</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Voice Receptionist Hero -->
+  <main class="reception-container">
+    <!-- Receptionist Persona Card -->
+    <section class="receptionist-hero">
+      <div class="receptionist-avatar-wrap">
+        <div class="avatar-glow"></div>
+        <div class="avatar-ring ring-outer"></div>
+        <div class="avatar-ring ring-middle"></div>
+        <div class="receptionist-avatar" id="avatar-element">
+          <div class="avatar-inner">
+            <span class="avatar-emoji">🛎️</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="receptionist-meta">
+        <h1 class="receptionist-name">Alex</h1>
+        <p class="receptionist-role">Virtual Front Desk Receptionist</p>
+        <div class="status-pill" id="agent-status-pill">
+          <span class="status-dot"></span>
+          <span class="status-text" id="status-label">Ready to assist you</span>
+        </div>
+      </div>
+
+      <!-- Waveform Audio Visualizer -->
+      <div class="waveform-container" id="waveform-box">
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+      </div>
+
+      <!-- Voice Interaction Control Center -->
+      <div class="voice-controls">
+        <button id="mic-btn" class="mic-button" title="Click to speak">
+          <div class="mic-icon-svg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </div>
+          <span class="mic-label" id="mic-label">Press & Speak</span>
+        </button>
+      </div>
+
+      <!-- Live Speech Transcript Preview -->
+      <div class="interim-transcript" id="live-speech-preview">
+        <span class="hint-text">Click the microphone to speak, or select a suggested request below</span>
+      </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div class="quick-prompts">
+        <span class="quick-label">Try asking:</span>
+        <div class="chips-row">
+          <button class="chip" data-text="Do you have any rooms available tonight?">🏨 Check Room Availability</button>
+          <button class="chip" data-text="What is the Wi-Fi password and network name?">📶 Wi-Fi Details</button>
+          <button class="chip" data-text="What time is breakfast and where is it served?">🍳 Breakfast Timings</button>
+          <button class="chip" data-text="Look up reservation for John Doe">🔍 Look up Reservation</button>
+          <button class="chip" data-text="Can you please send extra bath towels to room 402?">🧴 Towels to Room 402</button>
+          <button class="chip" data-text="Book a Deluxe Queen Suite for 2 nights for Alex Smith">🛎️ Book Deluxe Queen</button>
+          <button class="chip" data-text="What are the pool and gym hours?">🏊 Pool & Gym Hours</button>
+          <button class="chip" data-text="What time is check out?">⏰ Check-out Policy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Conversation Feed & Text Input Backup -->
+    <section class="conversation-section">
+      <div class="feed-header">
+        <span class="feed-title">Front Desk Transcript</span>
+        <button id="clear-chat-btn" class="text-btn">Clear History</button>
+      </div>
+
+      <div class="chat-feed" id="chat-messages">
+        <!-- Alex initial greeting -->
+        <div class="message-bubble agent-bubble">
+          <div class="bubble-sender">
+            <span class="sender-avatar">🛎️</span> Alex (Reception)
+          </div>
+          <div class="bubble-content">
+            Welcome to Grand Azure Hotel & Suites! My name is Alex, your virtual front desk receptionist. How may I assist with your stay today?
+          </div>
+          <div class="bubble-meta">Just now</div>
+        </div>
+      </div>
+
+      <!-- Text Input Form for typing fallback -->
+      <form id="chat-form" class="chat-input-bar">
+        <input 
+          type="text" 
+          id="text-input" 
+          placeholder="Speak above or type your hotel request here..." 
+          autocomplete="off"
+        />
+        <button type="submit" class="send-btn" id="send-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- Hotel System Dashboard Drawer / Modal -->
+  <aside class="dashboard-drawer" id="dashboard-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span>🏨</span> Hotel Management System (Dummy Data)
+      </div>
+      <button id="close-dashboard-btn" class="icon-close-btn">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Engine Indicator -->
+      <div class="system-status-box" id="engine-status-box">
+        <div class="engine-badge" id="engine-badge">Agent: Dummy Receptionist Engine</div>
+        <p class="engine-desc">Set <code>GEMINI_API_KEY</code> to enable Gemini response generation. Full front-desk tool calling and dummy state work in both modes!</p>
+      </div>
+
+      <!-- Room Inventory -->
+      <div class="dash-section">
+        <h3>Room Availability & Rates</h3>
+        <div class="rooms-grid" id="rooms-inventory-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Active Reservations -->
+      <div class="dash-section">
+        <div class="section-title-row">
+          <h3>Active Reservations</h3>
+          <span class="count-badge" id="res-count-badge">0</span>
+        </div>
+        <div class="reservations-list" id="reservations-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Service Requests -->
+      <div class="dash-section">
+        <div class="section-title-row">
+          <h3>Recent Guest Requests</h3>
+          <span class="count-badge" id="req-count-badge">0</span>
+        </div>
+        <div class="requests-list" id="requests-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button id="reset-db-btn" class="pill-btn danger-btn">Reset Hotel Dummy Data</button>
+      </div>
+    </div>
+  </aside>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
